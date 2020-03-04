@@ -9,22 +9,114 @@
         style="width: 100%; height: auto;"
         @mousemove.self="hoverCard('')"
       >
-        <g
-          class="card"
-          v-for="(card, i) in state.calcedHand"
-          :key="card.key"
-          :class="{ hovered: !!state.hoveredHandInfos[card.key] }"
-          @mousemove="hoverCard(i)"
-        >
+        <g v-for="key in state.deckKeys" :key="key">
           <SCard
-            :x="state.handInfos[card.key].x"
-            :y="state.handInfos[card.key].y"
+            :x="state.cardInfos[key].x"
+            :y="state.cardInfos[key].y"
             :width="state.cardSize.width"
             :height="state.cardSize.height"
-            :rotate="state.handInfos[card.key].rotate"
-            :scale="state.handInfos[card.key].scale"
-            :card="card"
-          />
+            :rotate="state.cardInfos[key].rotate"
+            :scale="state.cardInfos[key].scale"
+          >
+            <text
+              fill="black"
+              font-size="140"
+              :x="state.cardSize.width / 2"
+              :y="state.cardSize.height / 2"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              {{ key }}
+            </text>
+          </SCard>
+        </g>
+        <g v-for="key in state.talonKeys" :key="key">
+          <SCard
+            :x="state.cardInfos[key].x"
+            :y="state.cardInfos[key].y"
+            :width="state.cardSize.width"
+            :height="state.cardSize.height"
+            :rotate="state.cardInfos[key].rotate"
+            :scale="state.cardInfos[key].scale"
+          >
+            <text
+              fill="black"
+              font-size="140"
+              :x="state.cardSize.width / 2"
+              :y="state.cardSize.height / 2"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              {{ key }}
+            </text>
+          </SCard>
+        </g>
+        <g>
+          <SCard
+            :x="10"
+            :y="state.fieldSize.height - state.cardSize.height - 10"
+            :width="state.cardSize.width"
+            :height="state.cardSize.height"
+            :scale="0.5"
+          >
+            <text
+              fill="black"
+              font-size="140"
+              :x="state.cardSize.width / 2"
+              :y="state.cardSize.height / 2"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              {{ state.deckKeys.length }}
+            </text>
+          </SCard>
+        </g>
+        <g>
+          <SCard
+            :x="state.fieldSize.width - state.cardSize.width - 10"
+            :y="state.fieldSize.height - state.cardSize.height - 10"
+            :width="state.cardSize.width"
+            :height="state.cardSize.height"
+            :scale="0.5"
+          >
+            <text
+              fill="black"
+              font-size="140"
+              :x="state.cardSize.width / 2"
+              :y="state.cardSize.height / 2"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              {{ state.talonKeys.length }}
+            </text>
+          </SCard>
+        </g>
+        <g
+          class="card"
+          v-for="key in state.handKeys"
+          :key="key"
+          :class="{ hovered: !!state.hoveredHandInfos[key] }"
+          @mousemove="hoverCard(key)"
+        >
+          <SCard
+            :x="state.cardInfos[key].x"
+            :y="state.cardInfos[key].y"
+            :width="state.cardSize.width"
+            :height="state.cardSize.height"
+            :rotate="state.cardInfos[key].rotate"
+            :scale="state.cardInfos[key].scale"
+          >
+            <text
+              fill="black"
+              font-size="140"
+              :x="state.cardSize.width / 2"
+              :y="state.cardSize.height / 2"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              {{ key }}
+            </text>
+          </SCard>
         </g>
         <g
           class="hovered-card"
@@ -40,8 +132,18 @@
             :height="state.cardSize.height"
             :rotate="state.hoveredHandInfos[card.key].rotate"
             :scale="state.hoveredHandInfos[card.key].scale"
-            :card="card"
-          />
+          >
+            <text
+              fill="black"
+              font-size="140"
+              :x="state.cardSize.width / 2"
+              :y="state.cardSize.height / 2"
+              text-anchor="middle"
+              dominant-baseline="middle"
+            >
+              {{ card.key }}
+            </text>
+          </SCard>
         </g>
       </svg>
     </div>
@@ -62,7 +164,7 @@ function animate() {
 }
 requestAnimationFrame(animate)
 
-type HandInfo = { [key: string]: Position & { rotate: number; scale: number } }
+type HandInfo = Position & { rotate: number; scale: number }
 
 export default defineComponent({
   name: 'App',
@@ -71,81 +173,122 @@ export default defineComponent({
   },
   setup() {
     const state = reactive({
-      deck: [] as Card[],
-      hand: [...[...Array(0)].map((_, i) => createCard(i))] as Card[],
-      talon: [] as Card[],
+      cards: [...Array(6)]
+        .map((_, i) => createCard(i))
+        .reduce((p, c) => ({ ...p, [c.key]: c }), {}) as {
+        [key: string]: Card
+      },
+      deckKeys: [] as string[],
+      handKeys: [] as string[],
+      talonKeys: [] as string[],
+      deck: computed((): Card[] => state.deckKeys.map(key => state.cards[key])),
+      hand: computed((): Card[] => state.handKeys.map(key => state.cards[key])),
+      talon: computed((): Card[] =>
+        state.talonKeys.map(key => state.cards[key])
+      ),
       hoveredCardKey: '',
       fieldSize: computed(() => ({ width: 2600, height: 900 })),
       cardSize: computed(() => ({ width: 260, height: 400 })),
-      handMax: computed(() => 10),
-      handInfos: {} as { [key: string]: HandInfo },
+      handMax: computed(() => 5),
+      cardInfos: {} as { [key: string]: HandInfo },
       hoveredHandInfos: {} as { [key: string]: HandInfo },
-      tweens: [] as any[],
-      calcedHand: computed((): Card[] =>
-        state.hand.filter((card: Card) => state.handInfos[card.key])
-      ),
+      tweens: {} as { [key: string]: any },
       calcedHoveredHand: computed((): Card[] =>
         state.hand.filter((card: Card) => state.hoveredHandInfos[card.key])
       )
     })
+    state.deckKeys = Object.keys(state.cards)
+
+    const calcCardInfos = (): typeof state.cardInfos => {
+      const next: typeof state.cardInfos = {}
+      state.deckKeys.forEach(key => {
+        next[key] = {
+          x: 10,
+          y: state.fieldSize.height - state.cardSize.height - 10,
+          rotate: 0,
+          scale: 0.5
+        }
+      })
+      state.handKeys.forEach((key, index) => {
+        next[key] = {
+          ...getPositionInHand({
+            index,
+            handCount: state.handKeys.length,
+            cardSize: state.cardSize,
+            fieldSize: state.fieldSize
+          }),
+          rotate: getRotationInHand({
+            index,
+            handCount: state.hand.length
+          }),
+          scale: 1
+        }
+      })
+      state.talonKeys.forEach(key => {
+        next[key] = {
+          x: state.fieldSize.width - state.cardSize.width - 10,
+          y: state.fieldSize.height - state.cardSize.height - 10,
+          rotate: 0,
+          scale: 0.5
+        }
+      })
+      return next
+    }
+    state.cardInfos = calcCardInfos()
 
     const hoverCard = (key: string) => {
-      state.hoveredCardKey = key
+      if (!key) {
+        state.hoveredCardKey = ''
+        return
+      } else if (!state.handKeys.includes(key)) {
+        return
+      } else {
+        state.hoveredCardKey = key
+      }
+    }
+
+    const clearTweens = (keys: string[]) => {
+      keys.forEach(k => {
+        if (!state.tweens[k]) return
+
+        state.tweens[k].stop()
+        delete state.tweens[k]
+      })
     }
 
     const draw = () => {
-      state.hand = state.hand.concat(createCard(state.hand.length))
+      if (state.handKeys.length >= state.handMax) return
+
+      if (state.deckKeys.length === 0) {
+        state.deckKeys = state.talonKeys
+        state.talonKeys = []
+        state.cardInfos = calcCardInfos()
+        clearTweens(state.deckKeys)
+      }
+
+      const key = state.deckKeys.shift()
+      if (key) {
+        state.handKeys = [...state.handKeys, key]
+      }
     }
 
     const discard = (key: string) => {
-      // state.hoveredCardKey = ''
-      // state.handInfos[key] = state.hoveredHandInfos[key]
-      // delete state.hoveredHandInfos[key]
-      // new TWEEN.Tween(state.handInfos[key])
-      //   .to(
-      //     {
-      //       x: state.fieldSize.width + state.cardSize.width,
-      //       y: state.fieldSize.height * 0.7,
-      //       rotate: 1,
-      //       scale: 1
-      //     },
-      //     300
-      //   )
-      //   .onComplete(() => delete state.handInfos[key])
-      //   .start()
-      // state.hand = state.hand.filter(card => card.key !== key)
-    }
+      clearTweens(state.handKeys)
 
-    const calcHandInfos = () => {
-      state.handInfos = state.hand.reduce<{ [key: string]: HandInfo }>(
-        (map, card, index) => {
-          map[card.key] = {
-            ...getPositionInHand({
-              index,
-              handCount: state.hand.length,
-              cardSize: state.cardSize,
-              fieldSize: state.fieldSize
-            }),
-            rotate: getRotationInHand({
-              index,
-              handCount: state.hand.length
-            }),
-            scale: 1
-          }
-          return map
-        },
-        {}
-      )
-    }
+      state.cardInfos[key] = { ...state.hoveredHandInfos[key] }
+      state.hoveredCardKey = ''
+      delete state.hoveredHandInfos[key]
 
-    // watchEffect(() => {
-    //   calcHandInfos()
-    // })
-    calcHandInfos()
+      state.handKeys = state.handKeys.filter(k => k !== key)
+      state.talonKeys = [...state.talonKeys, key]
+      const nextInfos = calcCardInfos()
 
-    const clearTweens = () => {
-      state.tweens.forEach(t => t.stop())
-      state.tweens = []
+      clearTweens(state.handKeys)
+      Object.keys(nextInfos).forEach(k => {
+        state.tweens[k] = new TWEEN.Tween(state.cardInfos[k])
+          .to(nextInfos[k], 300)
+          .start()
+      })
     }
 
     watch(
@@ -153,13 +296,13 @@ export default defineComponent({
       (to: string, from: string) => {
         if (to === from) return
 
-        if (from && state.handInfos[from]) {
+        if (from && state.hoveredHandInfos[from]) {
           new TWEEN.Tween(state.hoveredHandInfos[from])
             .to(
               {
-                x: state.handInfos[from].x,
-                y: state.handInfos[from].y,
-                rotate: state.handInfos[from].rotate,
+                x: state.cardInfos[from].x,
+                y: state.cardInfos[from].y,
+                rotate: state.cardInfos[from].rotate,
                 scale: 1
               },
               100
@@ -168,13 +311,13 @@ export default defineComponent({
             .start()
         }
 
-        if (to && state.handInfos[to]) {
-          state.hoveredHandInfos[to] = { ...state.handInfos[to] }
+        if (to) {
+          state.hoveredHandInfos[to] = { ...state.cardInfos[to] }
           new TWEEN.Tween(state.hoveredHandInfos[to])
             .to(
               {
-                x: state.handInfos[to].x,
-                y: state.handInfos[to].y - 140,
+                x: state.cardInfos[to].x,
+                y: state.cardInfos[to].y - 140,
                 rotate: 0,
                 scale: 1.4
               },
@@ -186,54 +329,14 @@ export default defineComponent({
     )
 
     watch(
-      () => state.hand,
-      (to: Card[]) => {
-        clearTweens()
-        to.forEach((card, index) => {
-          const nextInfo = {
-            ...getPositionInHand({
-              index,
-              handCount: state.hand.length,
-              cardSize: state.cardSize,
-              fieldSize: state.fieldSize
-            }),
-            rotate: getRotationInHand({
-              index,
-              handCount: state.hand.length
-            }),
-            scale: 1
-          }
-
-          if (!state.handInfos[card.key]) {
-            state.handInfos[card.key] = {
-              x: 0,
-              y: state.fieldSize.height * 0.7,
-              rotate: 0,
-              scale: 1.5
-            }
-            state.tweens.push(
-              new TWEEN.Tween(state.handInfos[card.key])
-                .to(
-                  {
-                    ...nextInfo,
-                    x: nextInfo.x + 80,
-                    y: nextInfo.y + 10,
-                    scale: 1.1
-                  },
-                  400
-                )
-                .chain(
-                  new TWEEN.Tween(state.handInfos[card.key]).to(nextInfo, 200)
-                )
-                .start()
-            )
-          } else {
-            state.tweens.push(
-              new TWEEN.Tween(state.handInfos[card.key])
-                .to(nextInfo, 400)
-                .start()
-            )
-          }
+      () => state.handKeys,
+      (to: string[]) => {
+        clearTweens(to)
+        const nextInfos = calcCardInfos()
+        to.forEach(key => {
+          state.tweens[key] = new TWEEN.Tween(state.cardInfos[key])
+            .to(nextInfos[key], 400)
+            .start()
         })
       }
     )
@@ -258,14 +361,4 @@ export default defineComponent({
     opacity: 0;
   }
 }
-// .hovered-card {
-//   visibility: hidden;
-//   // transition: transform 0.2s;
-
-//   &.show {
-//     visibility: visible;
-//     // transform: translateY(-80px) scale(1.2, 1.2);
-//     // transform-origin: 50% 50%;
-//   }
-// }
 </style>

@@ -1,19 +1,19 @@
 <template>
-  <rect
-    :x="Math.round(x)"
-    :y="Math.round(y)"
-    :width="width"
-    :height="height"
-    :transform="state.transform"
-    stroke="black"
-    stroke-width="2"
-    fill="white"
-  />
+  <g :transform="state.transform">
+    <rect
+      :width="width"
+      :height="height"
+      stroke="black"
+      stroke-width="2"
+      fill="white"
+    />
+    <slot />
+  </g>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, computed, PropType } from 'vue'
-import { Position, Card } from '@/models'
+import { defineComponent, reactive, computed } from 'vue'
+import { Position } from '@/models'
 
 function scale(rate: number, cx: number, cy: number): string {
   return [
@@ -25,7 +25,6 @@ function scale(rate: number, cx: number, cy: number): string {
 
 export default defineComponent({
   props: {
-    card: { type: Object as PropType<Card>, required: true },
     x: { type: Number, required: true },
     y: { type: Number, required: true },
     rotate: { type: Number, default: 0 },
@@ -49,7 +48,9 @@ export default defineComponent({
             state.center.y
           )} rotate(${Math.round(props.rotate)}, ${Math.round(
             props.x + props.width / 2
-          )}, ${Math.round(props.y + props.height / 2)})`
+          )}, ${Math.round(props.y + props.height / 2)}) translate(${
+            props.x
+          }, ${props.y})`
       )
     })
     return { state }
