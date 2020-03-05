@@ -134,6 +134,8 @@ export function useFields(args: {
     handMax: computed(() => 10)
   })
 
+  state.cardInfos = getCardInfos(state)
+
   return {
     state,
     getDeckInfos: () => getDeckInfos(state),

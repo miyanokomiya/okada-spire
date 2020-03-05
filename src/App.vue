@@ -9,7 +9,7 @@
           `0 0 ${fields.state.fieldSize.width} ${fields.state.fieldSize.height}`
         "
         style="width: 100%; height: auto;"
-        @mousemove.self="hoverCard('')"
+        @mousemove.self="hoverCard()"
       >
         <CardList
           :cardList="fields.state.deck"
@@ -65,60 +65,20 @@
             </text>
           </SCard>
         </g>
-        <g
-          class="card"
-          v-for="key in fields.state.handKeys"
-          :key="key"
-          :class="{ hovered: !!state.hoveredHandInfos[key] }"
-          @mousemove="hoverCard(key)"
-        >
-          <SCard
-            :x="fields.state.cardInfos[key].x"
-            :y="fields.state.cardInfos[key].y"
-            :width="fields.state.cardSize.width"
-            :height="fields.state.cardSize.height"
-            :rotate="fields.state.cardInfos[key].rotate"
-            :scale="fields.state.cardInfos[key].scale"
-          >
-            <text
-              fill="black"
-              font-size="140"
-              :x="fields.state.cardSize.width / 2"
-              :y="fields.state.cardSize.height / 2"
-              text-anchor="middle"
-              dominant-baseline="middle"
-            >
-              {{ key }}
-            </text>
-          </SCard>
-        </g>
-        <g
-          class="hovered-card"
-          v-for="card in state.calcedHoveredHand"
-          :key="card.key"
-          :class="{ show: card.key === state.hoveredCardKey }"
-          @click="discard(card.key)"
-        >
-          <SCard
-            :x="state.hoveredHandInfos[card.key].x"
-            :y="state.hoveredHandInfos[card.key].y"
-            :width="fields.state.cardSize.width"
-            :height="fields.state.cardSize.height"
-            :rotate="state.hoveredHandInfos[card.key].rotate"
-            :scale="state.hoveredHandInfos[card.key].scale"
-          >
-            <text
-              fill="black"
-              font-size="140"
-              :x="fields.state.cardSize.width / 2"
-              :y="fields.state.cardSize.height / 2"
-              text-anchor="middle"
-              dominant-baseline="middle"
-            >
-              {{ card.key }}
-            </text>
-          </SCard>
-        </g>
+        <CardList
+          :cardList="fields.state.hand"
+          :cardInfoList="fields.state.handInfoList"
+          :cardSize="fields.state.cardSize"
+          :hideKeyList="[state.hoveredCardKey]"
+          @hover="hoverCard"
+        />
+        <CardList
+          v-if="state.hoveredCardKey"
+          :cardList="[fields.state.cards[state.hoveredCardKey]]"
+          :cardInfoList="[fields.state.cardInfos[state.hoveredCardKey]]"
+          :cardSize="fields.state.cardSize"
+          @click="discard(state.hoveredCardKey)"
+        />
       </svg>
     </div>
     <button style="padding: 1rem;" @click="draw">Draw</button>
@@ -126,7 +86,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, computed, watch } from 'vue'
+import { defineComponent, reactive, watch } from 'vue'
 import { Position, Card, createCard } from '@/models'
 import { useFields } from '@/hooks/field'
 import { useCardTweens } from '@/hooks/cardTweens.ts'
@@ -161,25 +121,36 @@ export default defineComponent({
     })
 
     const state = reactive({
-      hoveredCardKey: '',
-      hoveredHandInfos: {} as { [key: string]: HandInfo },
-      calcedHoveredHand: computed((): Card[] =>
-        fields.state.hand.filter(
-          (card: Card) => state.hoveredHandInfos[card.key]
-        )
-      )
+      hoveredCardKey: ''
     })
 
-    fields.state.cardInfos = fields.getCardInfos()
+    const hoverCard = (key = '') => {
+      if (state.hoveredCardKey === key) return
+      state.hoveredCardKey = key
 
-    const hoverCard = (key: string) => {
-      if (!key) {
-        state.hoveredCardKey = ''
-        return
-      } else if (!fields.state.handKeys.includes(key)) {
-        return
-      } else {
-        state.hoveredCardKey = key
+      const nextInfos = fields.getHandInfos()
+      fields.state.handKeys.forEach(key => {
+        cardTweens.overrideTween(
+          key,
+          new TWEEN.Tween(fields.state.cardInfos[key]).to(nextInfos[key], 100)
+        )
+      })
+
+      if (key) {
+        cardTweens.overrideTween(
+          key,
+          new TWEEN.Tween(fields.state.cardInfos[key]).to(
+            {
+              x: fields.state.cardInfos[key].x,
+              y:
+                fields.state.cardInfos[key].y -
+                fields.state.cardSize.height * 0.15,
+              rotate: 0,
+              scale: 1.4
+            },
+            100
+          )
+        )
       }
     }
 
@@ -222,9 +193,7 @@ export default defineComponent({
     }
 
     const discard = (key: string) => {
-      fields.state.cardInfos[key] = { ...state.hoveredHandInfos[key] }
       state.hoveredCardKey = ''
-      delete state.hoveredHandInfos[key]
 
       fields.state.handKeys = fields.state.handKeys.filter(k => k !== key)
       fields.state.talonKeys = [...fields.state.talonKeys, key]
@@ -237,43 +206,6 @@ export default defineComponent({
         )
       })
     }
-
-    watch(
-      () => state.hoveredCardKey,
-      (to: string, from: string) => {
-        if (to === from) return
-
-        if (from && state.hoveredHandInfos[from]) {
-          new TWEEN.Tween(state.hoveredHandInfos[from])
-            .to(
-              {
-                x: fields.state.cardInfos[from].x,
-                y: fields.state.cardInfos[from].y,
-                rotate: fields.state.cardInfos[from].rotate,
-                scale: 1
-              },
-              100
-            )
-            .onComplete(() => delete state.hoveredHandInfos[from])
-            .start()
-        }
-
-        if (to) {
-          state.hoveredHandInfos[to] = { ...fields.state.cardInfos[to] }
-          new TWEEN.Tween(state.hoveredHandInfos[to])
-            .to(
-              {
-                x: fields.state.cardInfos[to].x,
-                y: fields.state.cardInfos[to].y - 140,
-                rotate: 0,
-                scale: 1.4
-              },
-              100
-            )
-            .start()
-        }
-      }
-    )
 
     watch(
       () => fields.state.handKeys,

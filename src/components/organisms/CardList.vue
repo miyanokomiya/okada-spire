@@ -9,6 +9,8 @@
       :height="cardSize.height"
       :rotate="cardInfoList[i].rotate"
       :scale="cardInfoList[i].scale"
+      :opacity="hideKeyList.includes(card.key) ? 0 : 1"
+      @mousemove.native="hover(card.key)"
     >
       <text
         fill="black"
@@ -34,7 +36,13 @@ export default defineComponent({
   props: {
     cardList: { type: Array as PropType<Card[]>, required: true },
     cardInfoList: { type: Array as PropType<CardInfo[]>, required: true },
-    cardSize: { type: Object as PropType<Size>, required: true }
+    cardSize: { type: Object as PropType<Size>, required: true },
+    hideKeyList: { type: Array as PropType<string[]>, default: () => [] }
+  },
+  setup(_, ctx) {
+    return {
+      hover: (key: string) => ctx.emit('hover', key)
+    }
   }
 })
 </script>
