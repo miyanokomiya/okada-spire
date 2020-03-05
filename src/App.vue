@@ -5,112 +5,86 @@
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="none"
         font-family="sans-serif"
-        :viewBox="`0 0 ${state.fieldSize.width} ${state.fieldSize.height}`"
+        :viewBox="
+          `0 0 ${fields.state.fieldSize.width} ${fields.state.fieldSize.height}`
+        "
         style="width: 100%; height: auto;"
         @mousemove.self="hoverCard('')"
       >
-        <g v-for="key in state.deckKeys" :key="key">
-          <SCard
-            :x="state.cardInfos[key].x"
-            :y="state.cardInfos[key].y"
-            :width="state.cardSize.width"
-            :height="state.cardSize.height"
-            :rotate="state.cardInfos[key].rotate"
-            :scale="state.cardInfos[key].scale"
-          >
-            <text
-              fill="black"
-              font-size="140"
-              :x="state.cardSize.width / 2"
-              :y="state.cardSize.height / 2"
-              text-anchor="middle"
-              dominant-baseline="middle"
-            >
-              {{ key }}
-            </text>
-          </SCard>
-        </g>
-        <g v-for="key in state.talonKeys" :key="key">
-          <SCard
-            :x="state.cardInfos[key].x"
-            :y="state.cardInfos[key].y"
-            :width="state.cardSize.width"
-            :height="state.cardSize.height"
-            :rotate="state.cardInfos[key].rotate"
-            :scale="state.cardInfos[key].scale"
-          >
-            <text
-              fill="black"
-              font-size="140"
-              :x="state.cardSize.width / 2"
-              :y="state.cardSize.height / 2"
-              text-anchor="middle"
-              dominant-baseline="middle"
-            >
-              {{ key }}
-            </text>
-          </SCard>
-        </g>
+        <CardList
+          :cardList="fields.state.deck"
+          :cardInfoList="fields.state.deckInfoList"
+          :cardSize="fields.state.cardSize"
+        />
+        <CardList
+          :cardList="fields.state.talon"
+          :cardInfoList="fields.state.talonInfoList"
+          :cardSize="fields.state.cardSize"
+        />
         <g>
           <SCard
             :x="10"
-            :y="state.fieldSize.height - state.cardSize.height - 10"
-            :width="state.cardSize.width"
-            :height="state.cardSize.height"
+            :y="
+              fields.state.fieldSize.height - fields.state.cardSize.height - 10
+            "
+            :width="fields.state.cardSize.width"
+            :height="fields.state.cardSize.height"
             :scale="0.5"
           >
             <text
               fill="black"
               font-size="140"
-              :x="state.cardSize.width / 2"
-              :y="state.cardSize.height / 2"
+              :x="fields.state.cardSize.width / 2"
+              :y="fields.state.cardSize.height / 2"
               text-anchor="middle"
               dominant-baseline="middle"
             >
-              {{ state.deckKeys.length }}
+              {{ fields.state.deckKeys.length }}
             </text>
           </SCard>
         </g>
         <g>
           <SCard
-            :x="state.fieldSize.width - state.cardSize.width - 10"
-            :y="state.fieldSize.height - state.cardSize.height - 10"
-            :width="state.cardSize.width"
-            :height="state.cardSize.height"
+            :x="fields.state.fieldSize.width - fields.state.cardSize.width - 10"
+            :y="
+              fields.state.fieldSize.height - fields.state.cardSize.height - 10
+            "
+            :width="fields.state.cardSize.width"
+            :height="fields.state.cardSize.height"
             :scale="0.5"
           >
             <text
               fill="black"
               font-size="140"
-              :x="state.cardSize.width / 2"
-              :y="state.cardSize.height / 2"
+              :x="fields.state.cardSize.width / 2"
+              :y="fields.state.cardSize.height / 2"
               text-anchor="middle"
               dominant-baseline="middle"
             >
-              {{ state.talonKeys.length }}
+              {{ fields.state.talonKeys.length }}
             </text>
           </SCard>
         </g>
         <g
           class="card"
-          v-for="key in state.handKeys"
+          v-for="key in fields.state.handKeys"
           :key="key"
           :class="{ hovered: !!state.hoveredHandInfos[key] }"
           @mousemove="hoverCard(key)"
         >
           <SCard
-            :x="state.cardInfos[key].x"
-            :y="state.cardInfos[key].y"
-            :width="state.cardSize.width"
-            :height="state.cardSize.height"
-            :rotate="state.cardInfos[key].rotate"
-            :scale="state.cardInfos[key].scale"
+            :x="fields.state.cardInfos[key].x"
+            :y="fields.state.cardInfos[key].y"
+            :width="fields.state.cardSize.width"
+            :height="fields.state.cardSize.height"
+            :rotate="fields.state.cardInfos[key].rotate"
+            :scale="fields.state.cardInfos[key].scale"
           >
             <text
               fill="black"
               font-size="140"
-              :x="state.cardSize.width / 2"
-              :y="state.cardSize.height / 2"
+              :x="fields.state.cardSize.width / 2"
+              :y="fields.state.cardSize.height / 2"
               text-anchor="middle"
               dominant-baseline="middle"
             >
@@ -128,16 +102,16 @@
           <SCard
             :x="state.hoveredHandInfos[card.key].x"
             :y="state.hoveredHandInfos[card.key].y"
-            :width="state.cardSize.width"
-            :height="state.cardSize.height"
+            :width="fields.state.cardSize.width"
+            :height="fields.state.cardSize.height"
             :rotate="state.hoveredHandInfos[card.key].rotate"
             :scale="state.hoveredHandInfos[card.key].scale"
           >
             <text
               fill="black"
               font-size="140"
-              :x="state.cardSize.width / 2"
-              :y="state.cardSize.height / 2"
+              :x="fields.state.cardSize.width / 2"
+              :y="fields.state.cardSize.height / 2"
               text-anchor="middle"
               dominant-baseline="middle"
             >
@@ -147,17 +121,19 @@
         </g>
       </svg>
     </div>
-    <button @click="draw">Draw</button>
+    <button style="padding: 1rem;" @click="draw">Draw</button>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, reactive, computed, watch, watchEffect } from 'vue'
+import { defineComponent, reactive, computed, watch } from 'vue'
 import { Position, Card, createCard } from '@/models'
-import { getPositionInHand, getRotationInHand } from '@/hooks/field'
+import { useFields } from '@/hooks/field'
+import { useCardTweens } from '@/hooks/cardTweens.ts'
+import CardList from '@/components/organisms/CardList.vue'
 import SCard from '@/components/molecules/SCard.vue'
+import TWEEN from '@tweenjs/tween.js'
 
-const TWEEN = require('@tweenjs/tween.js').default
 function animate() {
   requestAnimationFrame(animate)
   TWEEN.update()
@@ -169,125 +145,96 @@ type HandInfo = Position & { rotate: number; scale: number }
 export default defineComponent({
   name: 'App',
   components: {
+    CardList,
     SCard
   },
   setup() {
-    const state = reactive({
+    const cardTweens = useCardTweens()
+    const fields = useFields({
       cards: [...Array(6)]
-        .map((_, i) => createCard(i))
+        .map((_, i) => createCard(i + 1))
         .reduce((p, c) => ({ ...p, [c.key]: c }), {}) as {
         [key: string]: Card
       },
-      deckKeys: [] as string[],
-      handKeys: [] as string[],
-      talonKeys: [] as string[],
-      deck: computed((): Card[] => state.deckKeys.map(key => state.cards[key])),
-      hand: computed((): Card[] => state.handKeys.map(key => state.cards[key])),
-      talon: computed((): Card[] =>
-        state.talonKeys.map(key => state.cards[key])
-      ),
+      fieldSize: { width: 2600, height: 900 },
+      cardSize: { width: 260, height: 400 }
+    })
+
+    const state = reactive({
       hoveredCardKey: '',
-      fieldSize: computed(() => ({ width: 2600, height: 900 })),
-      cardSize: computed(() => ({ width: 260, height: 400 })),
-      handMax: computed(() => 5),
-      cardInfos: {} as { [key: string]: HandInfo },
       hoveredHandInfos: {} as { [key: string]: HandInfo },
-      tweens: {} as { [key: string]: any },
       calcedHoveredHand: computed((): Card[] =>
-        state.hand.filter((card: Card) => state.hoveredHandInfos[card.key])
+        fields.state.hand.filter(
+          (card: Card) => state.hoveredHandInfos[card.key]
+        )
       )
     })
-    state.deckKeys = Object.keys(state.cards)
 
-    const calcCardInfos = (): typeof state.cardInfos => {
-      const next: typeof state.cardInfos = {}
-      state.deckKeys.forEach(key => {
-        next[key] = {
-          x: 10,
-          y: state.fieldSize.height - state.cardSize.height - 10,
-          rotate: 0,
-          scale: 0.5
-        }
-      })
-      state.handKeys.forEach((key, index) => {
-        next[key] = {
-          ...getPositionInHand({
-            index,
-            handCount: state.handKeys.length,
-            cardSize: state.cardSize,
-            fieldSize: state.fieldSize
-          }),
-          rotate: getRotationInHand({
-            index,
-            handCount: state.hand.length
-          }),
-          scale: 1
-        }
-      })
-      state.talonKeys.forEach(key => {
-        next[key] = {
-          x: state.fieldSize.width - state.cardSize.width - 10,
-          y: state.fieldSize.height - state.cardSize.height - 10,
-          rotate: 0,
-          scale: 0.5
-        }
-      })
-      return next
-    }
-    state.cardInfos = calcCardInfos()
+    fields.state.cardInfos = fields.getCardInfos()
 
     const hoverCard = (key: string) => {
       if (!key) {
         state.hoveredCardKey = ''
         return
-      } else if (!state.handKeys.includes(key)) {
+      } else if (!fields.state.handKeys.includes(key)) {
         return
       } else {
         state.hoveredCardKey = key
       }
     }
 
-    const clearTweens = (keys: string[]) => {
-      keys.forEach(k => {
-        if (!state.tweens[k]) return
-
-        state.tweens[k].stop()
-        delete state.tweens[k]
-      })
-    }
-
     const draw = () => {
-      if (state.handKeys.length >= state.handMax) return
+      if (fields.state.handKeys.length >= fields.state.handMax) return
 
-      if (state.deckKeys.length === 0) {
-        state.deckKeys = state.talonKeys
-        state.talonKeys = []
-        state.cardInfos = calcCardInfos()
-        clearTweens(state.deckKeys)
+      if (fields.state.deckKeys.length === 0) {
+        fields.state.deckKeys = fields.state.talonKeys
+        fields.state.talonKeys = []
+
+        const nextInfos = fields.getCardInfos()
+        fields.state.deckKeys.forEach((k, i) => {
+          cardTweens.overrideTween(
+            k,
+            new TWEEN.Tween(fields.state.cardInfos[k])
+              .to(
+                {
+                  ...nextInfos[k],
+                  x: nextInfos[k].x + fields.state.fieldSize.width / 2,
+                  y:
+                    nextInfos[k].y +
+                    (fields.state.cardSize.height / 2) * (Math.random() - 0.5)
+                },
+                200 + 50 * i
+              )
+              .chain(
+                new TWEEN.Tween(fields.state.cardInfos[k]).to(
+                  nextInfos[k],
+                  200 + 50 * i
+                )
+              )
+          )
+        })
       }
 
-      const key = state.deckKeys.shift()
+      const key = fields.state.deckKeys.shift()
       if (key) {
-        state.handKeys = [...state.handKeys, key]
+        fields.state.handKeys = [...fields.state.handKeys, key]
       }
     }
 
     const discard = (key: string) => {
-      clearTweens(state.handKeys)
-
-      state.cardInfos[key] = { ...state.hoveredHandInfos[key] }
+      fields.state.cardInfos[key] = { ...state.hoveredHandInfos[key] }
       state.hoveredCardKey = ''
       delete state.hoveredHandInfos[key]
 
-      state.handKeys = state.handKeys.filter(k => k !== key)
-      state.talonKeys = [...state.talonKeys, key]
-      const nextInfos = calcCardInfos()
+      fields.state.handKeys = fields.state.handKeys.filter(k => k !== key)
+      fields.state.talonKeys = [...fields.state.talonKeys, key]
+      const nextInfos = fields.getCardInfos()
 
-      clearTweens(state.handKeys)
       Object.keys(nextInfos).forEach(k => {
-        state.tweens[k] = new TWEEN.Tween(state.cardInfos[k])
-          .to(nextInfos[k], 300)
-          .start()
+        cardTweens.overrideTween(
+          k,
+          new TWEEN.Tween(fields.state.cardInfos[k]).to(nextInfos[k], 300)
+        )
       })
     }
 
@@ -300,9 +247,9 @@ export default defineComponent({
           new TWEEN.Tween(state.hoveredHandInfos[from])
             .to(
               {
-                x: state.cardInfos[from].x,
-                y: state.cardInfos[from].y,
-                rotate: state.cardInfos[from].rotate,
+                x: fields.state.cardInfos[from].x,
+                y: fields.state.cardInfos[from].y,
+                rotate: fields.state.cardInfos[from].rotate,
                 scale: 1
               },
               100
@@ -312,12 +259,12 @@ export default defineComponent({
         }
 
         if (to) {
-          state.hoveredHandInfos[to] = { ...state.cardInfos[to] }
+          state.hoveredHandInfos[to] = { ...fields.state.cardInfos[to] }
           new TWEEN.Tween(state.hoveredHandInfos[to])
             .to(
               {
-                x: state.cardInfos[to].x,
-                y: state.cardInfos[to].y - 140,
+                x: fields.state.cardInfos[to].x,
+                y: fields.state.cardInfos[to].y - 140,
                 rotate: 0,
                 scale: 1.4
               },
@@ -329,19 +276,19 @@ export default defineComponent({
     )
 
     watch(
-      () => state.handKeys,
+      () => fields.state.handKeys,
       (to: string[]) => {
-        clearTweens(to)
-        const nextInfos = calcCardInfos()
+        const nextInfos = fields.getCardInfos()
         to.forEach(key => {
-          state.tweens[key] = new TWEEN.Tween(state.cardInfos[key])
-            .to(nextInfos[key], 400)
-            .start()
+          cardTweens.addTween(
+            key,
+            new TWEEN.Tween(fields.state.cardInfos[key]).to(nextInfos[key], 400)
+          )
         })
       }
     )
 
-    return { state, hoverCard, draw, discard }
+    return { fields, state, hoverCard, draw, discard }
   }
 })
 </script>
