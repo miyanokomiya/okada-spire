@@ -69,19 +69,30 @@
           :cardList="fields.state.hand"
           :cardInfoList="fields.state.handInfoList"
           :cardSize="fields.state.cardSize"
-          :hideKeyList="[state.hoveredCardKey]"
+          :hideKeyList="[fields.state.hoveredCardKey]"
           @hover="hoverCard"
         />
         <CardList
-          v-if="state.hoveredCardKey"
-          :cardList="[fields.state.cards[state.hoveredCardKey]]"
-          :cardInfoList="[fields.state.cardInfos[state.hoveredCardKey]]"
+          v-if="fields.state.hoveredCardKey"
+          :cardList="[fields.state.cards[fields.state.hoveredCardKey]]"
+          :cardInfoList="[fields.state.cardInfos[fields.state.hoveredCardKey]]"
           :cardSize="fields.state.cardSize"
-          @click="discard(state.hoveredCardKey)"
+          @click="discard([fields.state.hoveredCardKey])"
         />
       </svg>
     </div>
-    <button style="padding: 1rem;" @click="draw">Draw</button>
+    <div style="margin: 1rem;">
+      <button style="padding: 1rem;" @click="draw(1)">Draw</button>
+      <button
+        style="margin: 0 1rem; padding: 1rem;"
+        @click="draw(10 - fields.state.handKeys.length)"
+      >
+        Draw 10
+      </button>
+      <button style="padding: 1rem;" @click="discard(fields.state.handKeys)">
+        Discard All
+      </button>
+    </div>
   </div>
 </template>
 
@@ -111,114 +122,150 @@ export default defineComponent({
   setup() {
     const cardTweens = useCardTweens()
     const fields = useFields({
-      cards: [...Array(6)]
+      cards: [...Array(15)]
         .map((_, i) => createCard(i + 1))
         .reduce((p, c) => ({ ...p, [c.key]: c }), {}) as {
         [key: string]: Card
       },
       fieldSize: { width: 2600, height: 900 },
-      cardSize: { width: 260, height: 400 }
+      cardSize: { width: 220, height: 220 * (20 / 13) }
     })
 
-    const state = reactive({
-      hoveredCardKey: ''
-    })
+    const state = reactive({})
 
     const hoverCard = (key = '') => {
-      if (state.hoveredCardKey === key) return
-      state.hoveredCardKey = key
+      if (fields.state.hoveredCardKey === key) return
+      fields.state.hoveredCardKey = key
 
       const nextInfos = fields.getHandInfos()
-      fields.state.handKeys.forEach(key => {
-        cardTweens.overrideTween(
-          key,
-          new TWEEN.Tween(fields.state.cardInfos[key]).to(nextInfos[key], 100)
-        )
-      })
-
-      if (key) {
-        cardTweens.overrideTween(
-          key,
-          new TWEEN.Tween(fields.state.cardInfos[key]).to(
-            {
-              x: fields.state.cardInfos[key].x,
-              y:
-                fields.state.cardInfos[key].y -
-                fields.state.cardSize.height * 0.15,
-              rotate: 0,
-              scale: 1.4
-            },
-            100
-          )
-        )
-      }
-    }
-
-    const draw = () => {
-      if (fields.state.handKeys.length >= fields.state.handMax) return
-
-      if (fields.state.deckKeys.length === 0) {
-        fields.state.deckKeys = fields.state.talonKeys
-        fields.state.talonKeys = []
-
-        const nextInfos = fields.getCardInfos()
-        fields.state.deckKeys.forEach((k, i) => {
+      fields.state.handKeys.forEach(k => {
+        if (k === key) {
           cardTweens.overrideTween(
             k,
-            new TWEEN.Tween(fields.state.cardInfos[k])
-              .to(
-                {
-                  ...nextInfos[k],
-                  x: nextInfos[k].x + fields.state.fieldSize.width / 2,
-                  y:
-                    nextInfos[k].y +
-                    (fields.state.cardSize.height / 2) * (Math.random() - 0.5)
-                },
-                200 + 50 * i
-              )
-              .chain(
-                new TWEEN.Tween(fields.state.cardInfos[k]).to(
-                  nextInfos[k],
-                  200 + 50 * i
-                )
-              )
+            new TWEEN.Tween(fields.state.cardInfos[k]).to(nextInfos[k], 100)
           )
-        })
-      }
-
-      const key = fields.state.deckKeys.shift()
-      if (key) {
-        fields.state.handKeys = [...fields.state.handKeys, key]
-      }
+        } else {
+          cardTweens.addTween(
+            k,
+            new TWEEN.Tween(fields.state.cardInfos[k]).to(nextInfos[k], 100)
+          )
+        }
+      })
     }
 
-    const discard = (key: string) => {
-      state.hoveredCardKey = ''
+    const talonToDeck = () => {
+      fields.state.deckKeys = fields.state.talonKeys
+      fields.state.talonKeys = []
 
-      fields.state.handKeys = fields.state.handKeys.filter(k => k !== key)
-      fields.state.talonKeys = [...fields.state.talonKeys, key]
+      const nextInfos = fields.getCardInfos()
+      fields.state.deckKeys.forEach((k, i) => {
+        cardTweens.overrideTween(
+          k,
+          new TWEEN.Tween(fields.state.cardInfos[k])
+            .to(
+              {
+                ...nextInfos[k],
+                x: nextInfos[k].x + fields.state.fieldSize.width / 2,
+                y:
+                  nextInfos[k].y +
+                  (fields.state.cardSize.height / 2) * (Math.random() - 0.5)
+              },
+              200 + 50 * i
+            )
+            .chain(
+              new TWEEN.Tween(fields.state.cardInfos[k]).to(
+                nextInfos[k],
+                200 + 50 * i
+              )
+            )
+        )
+      })
+    }
+
+    const tweenHand = () => {
+      const nextInfos = fields.getCardInfos()
+      fields.state.handKeys.forEach(key => {
+        cardTweens.addTween(
+          key,
+          new TWEEN.Tween(fields.state.cardInfos[key]).to(nextInfos[key], 400)
+        )
+      })
+    }
+
+    const draw = (count = 1) => {
+      if (count <= 0) return
+      if (fields.state.handKeys.length >= fields.state.handMax) return
+
+      const currentKeys = fields.state.handKeys.concat()
+      const newKeys: string[] = []
+      ;[...Array(count)].map(() => {
+        if (fields.state.deckKeys.length === 0) {
+          talonToDeck()
+        }
+
+        const key = fields.state.deckKeys.shift()
+        if (key) {
+          fields.state.handKeys = [...fields.state.handKeys, key]
+          newKeys.push(key)
+        }
+      })
+
+      const nextInfos = fields.getCardInfos()
+      currentKeys.forEach(key => {
+        cardTweens.addTween(
+          key,
+          new TWEEN.Tween(fields.state.cardInfos[key]).to(nextInfos[key], 400)
+        )
+      })
+      newKeys.forEach((key, i) => {
+        cardTweens.addTween(
+          key,
+          new TWEEN.Tween(fields.state.cardInfos[key])
+            .delay(20 * Math.pow(i, 1.2))
+            .to(
+              {
+                ...nextInfos[key],
+                x: nextInfos[key].x + fields.state.cardSize.width * 0.3
+              },
+              400
+            )
+            .chain(
+              new TWEEN.Tween(fields.state.cardInfos[key]).to(
+                nextInfos[key],
+                100
+              )
+            )
+        )
+      })
+    }
+
+    const discard = (keys: string[]) => {
+      fields.state.hoveredCardKey = ''
+
+      fields.state.handKeys = fields.state.handKeys.filter(
+        k => !keys.includes(k)
+      )
+      fields.state.talonKeys = [...fields.state.talonKeys, ...keys]
       const nextInfos = fields.getCardInfos()
 
-      Object.keys(nextInfos).forEach(k => {
+      fields.state.handKeys.forEach(k => {
         cardTweens.overrideTween(
           k,
           new TWEEN.Tween(fields.state.cardInfos[k]).to(nextInfos[k], 300)
         )
       })
-    }
-
-    watch(
-      () => fields.state.handKeys,
-      (to: string[]) => {
-        const nextInfos = fields.getCardInfos()
-        to.forEach(key => {
-          cardTweens.addTween(
-            key,
-            new TWEEN.Tween(fields.state.cardInfos[key]).to(nextInfos[key], 400)
+      fields.state.talonKeys
+        .concat()
+        .reverse()
+        .forEach((k, i) => {
+          cardTweens.overrideTween(
+            k,
+            new TWEEN.Tween(fields.state.cardInfos[k])
+              .delay(20 * Math.pow(i, 1.2))
+              .to(nextInfos[k], 300)
           )
         })
-      }
-    )
+    }
 
     return { fields, state, hoverCard, draw, discard }
   }

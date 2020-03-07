@@ -53,23 +53,38 @@ export function getHandInfos(args: {
   handKeys: string[]
   cardSize: Size
   fieldSize: Size
+  hoveredCardKey: string
 }): CardInfos {
+  const hoveredIndex = args.handKeys.indexOf(args.hoveredCardKey)
   return args.handKeys.reduce<CardInfos>((p, key, index) => {
+    const next = {
+      ...getPositionInHand({
+        index,
+        handCount: args.handKeys.length,
+        cardSize: args.cardSize,
+        fieldSize: args.fieldSize
+      }),
+      rotate: getRotationInHand({
+        index,
+        handCount: args.handKeys.length
+      }),
+      scale: 1
+    }
+
+    if (hoveredIndex !== -1) {
+      const diff = hoveredIndex - index
+      if (diff === 0) {
+        next.y = next.y - args.cardSize.height * 0.15
+        next.rotate = 0
+        next.scale = 1.4
+      } else {
+        next.x = next.x - (args.cardSize.width * 0.15) / diff
+      }
+    }
+
     return {
       ...p,
-      [key]: {
-        ...getPositionInHand({
-          index,
-          handCount: args.handKeys.length,
-          cardSize: args.cardSize,
-          fieldSize: args.fieldSize
-        }),
-        rotate: getRotationInHand({
-          index,
-          handCount: args.handKeys.length
-        }),
-        scale: 1
-      }
+      [key]: next
     }
   }, {})
 }
@@ -117,6 +132,7 @@ export function useFields(args: {
     handKeys: [] as string[],
     talonKeys: [] as string[],
     cardInfos: {} as CardInfos,
+    hoveredCardKey: '',
     deck: computed((): Card[] => state.deckKeys.map(key => state.cards[key])),
     hand: computed((): Card[] => state.handKeys.map(key => state.cards[key])),
     talon: computed((): Card[] => state.talonKeys.map(key => state.cards[key])),
