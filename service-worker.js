@@ -14,7 +14,7 @@
 importScripts("https://storage.googleapis.com/workbox-cdn/releases/4.3.1/workbox-sw.js");
 
 importScripts(
-  "/precache-manifest.c7fcea51f63b507059753772f250560e.js"
+  "precache-manifest.bc3be077accff4c4a168e9609b2abd5c.js"
 );
 
 workbox.core.setCacheNameDetails({prefix: "okada-spire"});
